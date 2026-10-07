@@ -266,8 +266,19 @@ RSpec.describe Dependabot::NpmAndYarn::FileUpdater::PnpmLockfileUpdater do
       end
     end
 
-    context "when there is a unsupported engine response (pnpm) from registry" do
+    # pnpm 12 does not enforce engines.pnpm and succeeds here, but a repository pinned to pnpm 10 or 11 still gets
+    # this error from pnpm, so the pnpm 11 output is replayed.
+    context "when pnpm 11 reports an unsupported engine for pnpm" do
       let(:project_name) { "pnpm/unsupported_engine_pnpm" }
+
+      before do
+        allow(Dependabot::NpmAndYarn::Helpers).to receive(:run_pnpm_command).and_raise(
+          Dependabot::SharedHelpers::HelperSubprocessFailed.new(
+            message: fixture("pnpm_errors", "pnpm11", "unsupported_engine_pnpm.txt"),
+            error_context: {}
+          )
+        )
+      end
 
       it "raises a helpful error" do
         expect { updated_pnpm_lock_content }
@@ -496,6 +507,17 @@ RSpec.describe Dependabot::NpmAndYarn::FileUpdater::PnpmLockfileUpdater do
       end
 
       let(:project_name) { "pnpm/github_dependency_private" }
+
+      # pnpm 12 reuses the commit in the lockfile and makes no request, so it succeeds here, but a repository
+      # pinned to pnpm 10 or 11 still re-resolves the dependency and gets this error, which is replayed.
+      before do
+        allow(Dependabot::NpmAndYarn::Helpers).to receive(:run_pnpm_command).and_raise(
+          Dependabot::SharedHelpers::HelperSubprocessFailed.new(
+            message: fixture("pnpm_errors", "pnpm11", "github_dependency_private.txt"),
+            error_context: {}
+          )
+        )
+      end
 
       it "raises a helpful error" do
         expect { updated_pnpm_lock_content }
