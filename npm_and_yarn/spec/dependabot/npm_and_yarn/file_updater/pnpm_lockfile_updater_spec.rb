@@ -873,8 +873,8 @@ RSpec.describe Dependabot::NpmAndYarn::FileUpdater::PnpmLockfileUpdater do
             .ordered
           expect(Dependabot::NpmAndYarn::Helpers).to receive(:run_pnpm_command)
             .with(
-              "-r --include-workspace-root update prettier --depth Infinity --lockfile-only",
-              { fingerprint: "-r --include-workspace-root update <dependency_name> --depth Infinity --lockfile-only" }
+              "-r --include-workspace-root update prettier --depth 9999 --lockfile-only",
+              { fingerprint: "-r --include-workspace-root update <dependency_name> --depth 9999 --lockfile-only" }
             )
             .ordered
             .and_return("")
@@ -1111,7 +1111,8 @@ RSpec.describe Dependabot::NpmAndYarn::FileUpdater::PnpmLockfileUpdater do
 
       it "routes the deep-update fallback through the release-age gate" do
         expect(Dependabot::NpmAndYarn::Helpers).to receive(:run_pnpm_command) do |cmd, **|
-          expect(cmd).to include("--depth Infinity")
+          expect(cmd).to include("--depth 9999")
+          expect(cmd).not_to include("Infinity")
           expect(cmd).to include("--config.minimum-release-age=10080")
           ""
         end.at_least(:once)
